@@ -8,6 +8,7 @@ import { truthy, falsy, pattern } from '@stoplight/spectral-functions';
 import { DiagnosticSeverity } from '@stoplight/types';
 import { Dok03Base } from './rulesetUtil.ts';
 import { Dok15Base } from './rulesetUtil.ts';
+import { commonEnglishWords, commonSwedishWords } from './constants/CommonWords.ts';
 const moduleName: string = 'DokRules.ts';
 
 export class Dok15Get extends Dok15Base {
@@ -132,6 +133,54 @@ export class Dok20 extends BaseRuleset {
     super.initializeFormats(['OAS2', 'OAS3']);
   }
   severity = DiagnosticSeverity.Error;
+}
+export class Dok06 extends BaseRuleset {
+  static customProperties: CustomProperties = {
+    område: 'Dokumentation',
+    id: 'DOK.06',
+  };
+  given = '$.info.description';
+  message = 'Dokumentationen BÖR finnas på både svenska och engelska.';
+  then = [
+    {
+      function: (targetVal: string, _opts: string, paths: string[]) => {
+        const lowerCaseDescriptionList = targetVal.toLowerCase().match(/[a-zåäö]+/gi) || [];
+
+        const containsEnglish = lowerCaseDescriptionList.some((word) => commonEnglishWords.includes(word));
+        const containsSwedish = lowerCaseDescriptionList.some((word) => commonSwedishWords.includes(word));
+
+        if (!containsEnglish || !containsSwedish) {
+          return [
+            {
+              message: this.message,
+              severity: this.severity,
+              paths: paths,
+            },
+          ];
+        } else {
+          return [];
+        }
+      },
+    },
+    {
+      function: (targetVal: string, _opts: string, paths: string[]) => {
+        this.trackRuleExecutionHandler(
+          JSON.stringify(targetVal, null, 2),
+          _opts,
+          paths,
+          this.severity,
+          this.constructor.name,
+          moduleName,
+          Dok06.customProperties,
+        );
+      },
+    },
+  ];
+  constructor() {
+    super();
+    super.initializeFormats(['OAS3']);
+  }
+  severity = DiagnosticSeverity.Warning;
 }
 export class Dok07 extends BaseRuleset {
   static customProperties: CustomProperties = {
