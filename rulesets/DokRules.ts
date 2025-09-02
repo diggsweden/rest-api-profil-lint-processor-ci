@@ -214,6 +214,78 @@ export class Dok07 extends BaseRuleset {
   }
   severity = DiagnosticSeverity.Warning;
 }
+export class Dok08 extends BaseRuleset {
+  static customProperties: CustomProperties = {
+    område: 'Dokumentation',
+    id: 'DOK.08',
+  };
+  given = '$';
+  message = 'Ett API:s servicenivå SKALL finnas tydligt beskriven i dokumentationen.';
+  then = [
+    {
+      function: (targetVal: any, _opts: string, paths: string[]) => {
+        const isValidUrl = (url: string): boolean => {
+          const urlPattern = new RegExp('^(https?:\\/\\/)?(www\\.)?([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}(\\/\\S*)?$');
+          return urlPattern.test(url);
+        };
+
+        const hasValidSlaFields = (sla: any): boolean => {
+          return !!(sla?.availability && sla?.responseTime && sla?.support);
+        };
+
+        const includesSlaTerm = (description: string): boolean => {
+          const slaTerms = ['service level agreement', 'sla'];
+          return slaTerms.some((term) => description.includes(term));
+        };
+
+        if (targetVal?.info?.termsOfService) {
+          return [];
+        }
+
+        const customSlaField = targetVal?.info?.['x-sla'];
+        if (customSlaField && hasValidSlaFields(customSlaField)) {
+          return [];
+        }
+
+        const externalDocs = targetVal?.externalDocs;
+        if (
+          externalDocs?.description &&
+          externalDocs?.url &&
+          isValidUrl(externalDocs.url) &&
+          includesSlaTerm(externalDocs.description.toLowerCase())
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            message: this.message,
+            severity: this.severity,
+            paths: paths,
+          },
+        ];
+      },
+    },
+    {
+      function: (targetVal: string, _opts: string, paths: string[]) => {
+        this.trackRuleExecutionHandler(
+          JSON.stringify(targetVal, null, 2),
+          _opts,
+          paths,
+          this.severity,
+          this.constructor.name,
+          moduleName,
+          Dok08.customProperties,
+        );
+      },
+    },
+  ];
+  constructor() {
+    super();
+    super.initializeFormats(['OAS2', 'OAS3']);
+  }
+  severity = DiagnosticSeverity.Error;
+}
 export class Dok19 extends BaseRuleset {
   static customProperties: CustomProperties = {
     område: 'Dokumentation',
