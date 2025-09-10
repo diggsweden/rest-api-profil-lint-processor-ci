@@ -35,6 +35,7 @@ Detta dokument specificerar reglerna som verktyget tillämpar.
    - [ID: DOK.06](#id-dok06)
    - [ID: DOK.07](#id-dok07)
    - [ID: DOK.08](#id-dok08)
+   - [ID: DOK.09](#id-dok09)
    - [ID: DOK.15](#id-dok15)
    - [ID: DOK.17](#id-dok17)
    - [ID: DOK.19](#id-dok19)
@@ -237,6 +238,29 @@ Regeln förutsätter att det finns en förekomst av minst ett av objekten `info.
 ![Exempelbild på ovan nämnda objekts placering i en OpenAPI Description](images/dok8.png)
 
 _Ett av objekten räcker för att uppfylla regeln._
+
+---
+
+### ID: DOK.09
+
+**Krav:** Kända problem och begränsningar SKALL finnas tydlig beskrivna i dokumentationen.
+
+**Typ:** SKALL
+
+**JSON Path Plus-uttryck:**
+
+```
+$
+```
+
+**Förklaring:**
+Regeln förutsätter att det finns en förekomst av något av objekten `info.description` och `externalDocs.description`, och att de innehåller någon av strängarna "limit", "begränsning" eller "problem". Alternativt så räcker det om det finns en förekomst av `info.x-limitations`.
+
+**Exempel:**
+
+![Exempelbild på ovan nämnda objekts placering i en OpenAPI Description](images/dok9.png)
+
+_Ett av objekten räcker för att uppfylla regeln, men "limit", "begränsning" eller "problem" behöver nämnas i `description`-fälten för att de ska räknas._
 
 ---
 

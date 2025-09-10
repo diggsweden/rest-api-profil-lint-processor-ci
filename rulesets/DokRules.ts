@@ -286,6 +286,64 @@ export class Dok08 extends BaseRuleset {
   }
   severity = DiagnosticSeverity.Error;
 }
+export class Dok09 extends BaseRuleset {
+  static customProperties: CustomProperties = {
+    område: 'Dokumentation',
+    id: 'DOK.09',
+  };
+  given = '$';
+  message = 'Kända problem och begränsningar SKALL finnas tydlig beskrivna i dokumentationen.';
+  then = [
+    {
+      function: (targetVal: any, _opts: string, paths: string[]) => {
+        const includesLimitTerm = (description: string): boolean => {
+          if (description) {
+            const limitTerms = ['limit', 'begränsning', 'problem'];
+            return limitTerms.some((term) => description.includes(term));
+          } else {
+            return false;
+          }
+        };
+
+        const externalDocs = targetVal?.externalDocs;
+        const info = targetVal?.info;
+        if (
+          info?.['x-limitations'] ||
+          includesLimitTerm(info?.description?.toLowerCase()) ||
+          includesLimitTerm(externalDocs?.description?.toLowerCase())
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            message: this.message,
+            severity: this.severity,
+            paths: paths,
+          },
+        ];
+      },
+    },
+    {
+      function: (targetVal: string, _opts: string, paths: string[]) => {
+        this.trackRuleExecutionHandler(
+          JSON.stringify(targetVal, null, 2),
+          _opts,
+          paths,
+          this.severity,
+          this.constructor.name,
+          moduleName,
+          Dok09.customProperties,
+        );
+      },
+    },
+  ];
+  constructor() {
+    super();
+    super.initializeFormats(['OAS2', 'OAS3']);
+  }
+  severity = DiagnosticSeverity.Error;
+}
 export class Dok19 extends BaseRuleset {
   static customProperties: CustomProperties = {
     område: 'Dokumentation',
