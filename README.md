@@ -5,8 +5,8 @@ SPDX-License-Identifier: CC0-1.0
 -->
 
 # REST API-profil - Lint Processor (RAP-LP)
+[![Tag](https://img.shields.io/github/v/tag/diggsweden/rest-api-profil-lint-processor?style=for-the-badge&sort=semver&filter=%21*-*&color=green)](https://github.com/diggsweden/rest-api-profil-lint-processor/tags)
 
-[![Tag](https://img.shields.io/github/v/tag/diggsweden/rest-api-profil-lint-processor?style=for-the-badge&color=green)](https://github.com/diggsweden/rest-api-profil-lint-processor/tags)
 
 [![License: EUPL 1.2](https://img.shields.io/badge/License-European%20Union%20Public%20Licence%201.2-library?style=for-the-badge&&color=lightblue)](LICENSE)
 [![REUSE](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.reuse.software%2Fstatus%2Fgithub.com%2Fdiggsweden%2Frest-api-profil-lint-processor&query=status&style=for-the-badge&label=REUSE&color=lightblue)](https://api.reuse.software/info/github.com/diggsweden/rest-api-profil-lint-processor)
@@ -25,6 +25,7 @@ RAP-LP är ett kommandoradsverktyg för att linta OpenAPI v3-definitioner med hj
   - [Innehållsförteckning](#innehållsförteckning)
   - [Installation och krav](#installation-och-krav)
   - [Instruktioner för att komma igång snabbt](#instruktioner-för-att-komma-igång-snabbt)
+  - [Versioner](#versioner)
   - [Användning](#användning)
   - [Begränsningar](#begränsningar)
   - [Support](#support)
@@ -38,7 +39,7 @@ RAP-LP är ett kommandoradsverktyg för att linta OpenAPI v3-definitioner med hj
 
 Det enklaste sättet att installera RAP-LP är genom att använda [npm](https://www.npmjs.com/):
 
-1. Klona ned projektet
+1. Klona ned projektet från senaste release, gärna via latest release tag.
 2. Installera alla beroenden:
 
 ```bash
@@ -58,6 +59,11 @@ npm start -- -f PATH_TO_THE_YAML_FILE
 ```bash
 npm start -- -f apis/dok-api.yaml
 ```
+
+## Versioner
+Senaste release tag ska alltid vara stabil och testad, vilket gör den till den föredragna versionen för att nyttja verktyget.
+
+Main och pre-releaser används med reservation för att all funktionalitet inte är garanterat stabil och testad.
 
 ## Användning
 
