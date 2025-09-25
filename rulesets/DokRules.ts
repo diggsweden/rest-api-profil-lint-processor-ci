@@ -344,6 +344,51 @@ export class Dok09 extends BaseRuleset {
   }
   severity = DiagnosticSeverity.Error;
 }
+
+export class Dok11 extends BaseRuleset {
+  static customProperties: CustomProperties = {
+    område: 'Dokumentation',
+    id: 'DOK.11',
+  };
+  given = '$.info';
+  message = 'Avsikten och beteendet hos API:et SKALL beskrivas så utförligt och tydligt som möjligt.';
+  then = [
+    {
+      function: (targetVal: any, _opts: string, paths: string[]) => {
+        const description = targetVal.description;
+        if (!description || typeof description !== 'string' || description.trim() === '') {
+          return [
+            {
+              message: this.message,
+              severity: this.severity,
+              paths: paths,
+            },
+          ];
+        }
+        return [];
+      },
+    },
+    {
+      function: (targetVal: string, _opts: string, paths: string[]) => {
+        this.trackRuleExecutionHandler(
+          JSON.stringify(targetVal, null, 2),
+          _opts,
+          paths,
+          this.severity,
+          this.constructor.name,
+          moduleName,
+          Dok11.customProperties,
+        );
+      },
+    },
+  ];
+  constructor() {
+    super();
+    super.initializeFormats(['OAS2', 'OAS3']);
+  }
+  severity = DiagnosticSeverity.Error;
+}
+
 export class Dok19 extends BaseRuleset {
   static customProperties: CustomProperties = {
     område: 'Dokumentation',
