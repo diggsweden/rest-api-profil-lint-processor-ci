@@ -18,11 +18,13 @@
     "mergeConfidence:all-badges"
   ],
   "commitMessageLowerCase": "auto",
-  "minimumReleaseAge": "4 days",
+  "minimumReleaseAge": "7 days",
   "labels": ["dependencies"],
   "vulnerabilityAlerts": {
     "labels": ["security", "dependencies"]
   },
+  "timezone": "Europe/Stockholm",
+  "automergeSchedule": ["0 9-21 * * 6"],
   "packageRules": [
     {
       "matchManagers": ["github-actions"],
