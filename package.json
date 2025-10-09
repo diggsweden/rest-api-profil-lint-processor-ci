@@ -1,5 +1,5 @@
 {
-  "name": "@diggsweden/rest-api-profil-lint-processor",
+  "name": "@diggsweden/rest-api-profil-lint-processor-ci",
   "version": "v1.0.0",
   "main": "./dist/app.js",
   "bin": {
@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:diggsweden/rest-api-profil-lint-processor"
+    "url": "git@github.com:diggsweden/rest-api-profil-lint-processor-ci"
   },
   "description": "A command-line tool to lint OpenAPI v3 definitions using Spectral",
   "scripts": {
