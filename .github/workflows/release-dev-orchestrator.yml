@@ -26,6 +26,15 @@ on:
         required: false
         default: "22"
         type: string
+      packageRegistry:
+        description: "Package registry"
+        required: false
+        default: "https://npm.pkg.github.com"
+        type: string
+      publishNpm:
+        description: "Also publish npm dev package?"
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -45,8 +54,8 @@ jobs:
       workingDirectory: ${{ inputs.workingDirectory }}
 
   build-npm-package-dev:
-    if: ${{ inputs.projectType == 'npm' }}
-    name: Publish npm dev package (@diggsweden)
+    if: ${{ inputs.projectType == 'npm' && inputs.publishNpm }}
+    name: Publish Dev npm package
     needs: build-dev-container
     permissions:
       contents: read
@@ -56,6 +65,4 @@ jobs:
     with:
       nodeVersion: ${{ inputs.nodeVersion }}
       workingDirectory: ${{ inputs.workingDirectory }}
-      registry: "https://npm.pkg.github.com"
-      distTag: "dev"
-      scope: "diggsweden"
+      registry: ${{ inputs.packageRegistry }}

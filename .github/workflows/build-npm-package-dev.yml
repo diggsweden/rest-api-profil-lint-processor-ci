@@ -1,4 +1,4 @@
-name: Publish NPM Dev (GH Packages)
+name: Build Dev npm package to Github Packages
 
 on:
   workflow_call:
@@ -14,19 +14,9 @@ on:
         default: "."
         type: string
       registry:
-        description: "Registry URL"
+        description: "Package registry"
         required: false
         default: "https://npm.pkg.github.com"
-        type: string
-      distTag:
-        description: "npm dist-tag for dev publishes"
-        required: false
-        default: "dev"
-        type: string
-      scope:
-        description: "Expected package scope for GH Packages"
-        required: false
-        default: "diggsweden"
         type: string
     outputs:
       packageName:
@@ -38,12 +28,10 @@ on:
       didPublish:
         description: "Whether publish ran"
         value: ${{ jobs.publish.outputs.didPublish }}
-
 permissions:
   contents: read
-
 jobs:
-  publish:
+  build-and-push:
     name: Build & Publish dev package
     runs-on: ubuntu-latest
     permissions:
@@ -51,15 +39,13 @@ jobs:
       packages: write
     outputs:
       packageName: ${{ steps.meta.outputs.name }}
-      packageVersion: ${{ steps.devver.outputs.version }}
+      packageVersion: ${{ steps.tags.outputs.version }}
       didPublish: ${{ steps.publish.outputs.did_publish }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -67,92 +53,78 @@ jobs:
           registry-url: ${{ inputs.registry }}
           cache: npm
           cache-dependency-path: ${{ inputs.workingDirectory }}/package-lock.json
-
       - name: Read package metadata
         id: meta
         working-directory: ${{ inputs.workingDirectory }}
         run: |
           NAME=$(node -p "require('./package.json').name")
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Ensure @${{ inputs.scope }} scope
+      - name: Ensure @diggsweden scope
         working-directory: ${{ inputs.workingDirectory }}
         run: |
           NAME=$(node -p "require('./package.json').name")
-          if [[ "$NAME" != @${{ inputs.scope }}/* ]]; then
-            echo "::error::package.json name must be scoped as @${{ inputs.scope }}/<pkg>"
+          if [[ "$NAME" != @diggsweden/* ]]; then
+            echo "::error::package.json name must be scoped as @diggsweden/<pkg>"
             echo "Found: $NAME"
             exit 1
           fi
-          npm config set @${{ inputs.scope }}:registry ${{ inputs.registry }}
-
-      # 🔽 Your requested logic, adapted to set npm version
-      - name: Generate dev version from latest tag + branch + sha
+          npm config set @diggsweden:registry https://npm.pkg.github.com
+      - name: Generate dev tags
         id: tags
-        working-directory: ${{ inputs.workingDirectory }}
-        shell: bash
         run: |
-          set -euo pipefail
+          # Get the latest semver tag
           git fetch --tags
+          # Use git describe to get the most recent tag, or sort -V for proper version sorting
+          LATEST_TAG=$(git describe --tags --match="v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 2>/dev/null || git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n1 || echo "")
 
-          # Find latest vX.Y.Z tag (or fallback)
-          LATEST_TAG=$(git describe --tags --match="v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 2>/dev/null \
-            || git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n1 \
-            || echo "")
-
+          # If no semver tag exists, use v0.0.0
           if [ -z "$LATEST_TAG" ]; then
             BASE_VERSION="0.0.0"
           else
+            # Remove 'v' prefix if present
             BASE_VERSION="${LATEST_TAG#v}"
           fi
 
-          # Sanitize branch (prefer GITHUB_REF_NAME if available)
-          BRANCH_NAME="${GITHUB_REF_NAME:-${GITHUB_REF#refs/heads/}}"
+          # Get branch name and sanitize for Docker tag
+          # Remove refs/heads/ prefix, replace slashes and special chars with dashes
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | sed 's|[^a-zA-Z0-9._-]|-|g' | sed 's|^-*||; s|-*$||')
-          SHORT_SHA=$(git rev-parse --short=7 HEAD)
 
-          # Compose npm-compatible prerelease version:
-          # e.g. 1.2.3-dev-my-branch-abc1234
-          DEV_VER="${BASE_VERSION}-dev-${SANITIZED_BRANCH}-${SHORT_SHA}"
+          # Dev tag with version, branch, and sha
+          SHORT_SHA=${GITHUB_SHA:0:7}
+          IMAGE_NAME="${{ inputs.registry }}/${{ github.repository }}"
+          DEV_TAG="${BASE_VERSION}-dev-${SANITIZED_BRANCH}-${SHORT_SHA}"
 
-          # Write into package.json (no commits/tags)
-          node -e "let f=require('./package.json'); f.version='${DEV_VER}'; require('fs').writeFileSync('./package.json', JSON.stringify(f,null,2));"
-
-          echo "version=${DEV_VER}" >> "$GITHUB_OUTPUT"
-          echo "📦 Dev version: ${DEV_VER}"
-
+          echo "tags=${IMAGE_NAME}:${DEV_TAG}" >> $GITHUB_OUTPUT
+          echo "image=${IMAGE_NAME}:${DEV_TAG}" >> $GITHUB_OUTPUT
+          echo "📦 Dev tag: ${DEV_TAG}"
       - name: Install
         working-directory: ${{ inputs.workingDirectory }}
         run: npm ci --prefer-offline --no-audit
-
       - name: Test (if present)
         working-directory: ${{ inputs.workingDirectory }}
         run: npm test -s || echo "No tests configured"
-
       - name: Build (if present)
         working-directory: ${{ inputs.workingDirectory }}
         run: npm run -s build || echo "No build script"
-
       - name: Pack (artifact)
         id: pack
         working-directory: ${{ inputs.workingDirectory }}
         run: |
           FILE=$(npm pack --silent)
           echo "tarball=$FILE" >> "$GITHUB_OUTPUT"
-
       - name: Upload tarball
         uses: actions/upload-artifact@v4
         with:
           name: npm-dev-tarball
           path: ${{ inputs.workingDirectory }}/${{ steps.pack.outputs.tarball }}
           retention-days: 7
-
       - name: Publish to GitHub Packages
         id: publish
         working-directory: ${{ inputs.workingDirectory }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Publishing $(node -p "require('./package.json').name")@$(node -p "require('./package.json').version") with tag '${{ inputs.distTag }}'"
-          npm publish --tag "${{ inputs.distTag }}"
+          echo "Publishing $(node -p "require('./package.json').name")@$(node -p "require('./package.json').version") with tag 'dev'"
+          npm publish --tag "dev"
           echo "did_publish=true" >> "$GITHUB_OUTPUT"

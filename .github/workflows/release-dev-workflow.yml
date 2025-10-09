@@ -33,4 +33,5 @@ jobs:
     uses:  ./.github/workflows/release-dev-orchestrator.yml
     with:
       projectType: npm
+      publishNpm: true
     secrets: inherit
