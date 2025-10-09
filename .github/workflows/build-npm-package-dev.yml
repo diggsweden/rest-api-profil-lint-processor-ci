@@ -47,7 +47,7 @@ jobs:
     name: Build & Publish dev package
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
     outputs:
       packageName: ${{ steps.meta.outputs.name }}
