@@ -1,3 +1,32 @@
+# SPDX-FileCopyrightText: 2025 The Reusable CI Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+# Development NPM Package Builder
+# 
+# Purpose: Fast npm package builds for development and testing.
+#
+# How it works:
+# 1. Checks out repository code
+# 2. Builds project (NPM build)
+# 3. Builds npm package for dev purpose
+# 4. Tags with version, branch name, and SHA (e.g., 0.5.9-dev-feat-awesome-abc1234)
+# 5. Pushes to Github Packages (npm) for development testing
+#
+# Security controls:
+# - Minimal - optimized for speed over security
+# - Packages clearly marked with -dev suffix
+# - Basic authentication to Github npm package registry
+# - No production features enabled
+#
+# Required Secrets:
+#   None - uses GITHUB_TOKEN for Github npm package registry authentication
+#
+# Required Permissions:
+#   contents: read   # Read source code
+#   packages: write  # Push images to Github Packages
+#
+# Outputs:
+#   package: NPM package
 name: Build Dev npm package to Github Packages
 
 on:
@@ -94,11 +123,14 @@ jobs:
 
           echo "dev_version=${DEV_VERSION}" >> "$GITHUB_OUTPUT"
           echo "📦 Dev version: ${DEV_VERSION}"
-      - name: Apply dev version to package.json
+      - name: Apply dev version to package.json (npm)
         working-directory: ${{ inputs.workingDirectory }}
+        env:
+          DEV_VERSION: ${{ steps.devver.outputs.dev_version }}
         run: |
-          node -e "const fs=require('fs');const p='./package.json';const f=require(p);f.version='${{ steps.devver.outputs.dev_version }}';fs.writeFileSync(p, JSON.stringify(f,null,2));"
-          echo "Using version:" $(node -p "require('./package.json').version)
+          set -euo pipefail
+          npm version "$DEV_VERSION" --no-git-tag-version --allow-same-version
+          echo "Using version: $(node -p "require('./package.json').version")"
       - name: Install
         working-directory: ${{ inputs.workingDirectory }}
         run: npm ci --prefer-offline --no-audit
