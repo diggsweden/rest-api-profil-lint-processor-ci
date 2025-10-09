@@ -126,7 +126,7 @@ jobs:
       - name: Apply dev version to package.json (npm)
         working-directory: ${{ inputs.workingDirectory }}
         env:
-          DEV_VERSION: ${{ steps.devver.outputs.dev_version }}
+          DEV_VERSION: ${{ steps.tags.outputs.dev_version }}
         run: |
           set -euo pipefail
           npm version "$DEV_VERSION" --no-git-tag-version --allow-same-version
