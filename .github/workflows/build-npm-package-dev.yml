@@ -71,33 +71,34 @@ jobs:
           npm config set @diggsweden:registry https://npm.pkg.github.com
       - name: Generate dev tags
         id: tags
+        shell: bash
+        working-directory: ${{ inputs.workingDirectory }}
         run: |
-          # Get the latest semver tag
-          git fetch --tags
-          # Use git describe to get the most recent tag, or sort -V for proper version sorting
-          LATEST_TAG=$(git describe --tags --match="v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 2>/dev/null || git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n1 || echo "")
+          set -euo pipefail
+          git fetch --tags || true
 
-          # If no semver tag exists, use v0.0.0
+          LATEST_TAG=$(git describe --tags --match="v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 2>/dev/null \
+            || git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n1 || echo "")
+
           if [ -z "$LATEST_TAG" ]; then
             BASE_VERSION="0.0.0"
           else
-            # Remove 'v' prefix if present
             BASE_VERSION="${LATEST_TAG#v}"
           fi
 
-          # Get branch name and sanitize for Docker tag
-          # Remove refs/heads/ prefix, replace slashes and special chars with dashes
-          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          BRANCH_NAME="${GITHUB_REF_NAME:-${GITHUB_REF#refs/heads/}}"
           SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | sed 's|[^a-zA-Z0-9._-]|-|g' | sed 's|^-*||; s|-*$||')
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
 
-          # Dev tag with version, branch, and sha
-          SHORT_SHA=${GITHUB_SHA:0:7}
-          IMAGE_NAME="${{ inputs.registry }}/${{ github.repository }}"
-          DEV_TAG="${BASE_VERSION}-dev-${SANITIZED_BRANCH}-${SHORT_SHA}"
+          DEV_VERSION="${BASE_VERSION}-dev-${SANITIZED_BRANCH}-${SHORT_SHA}"
 
-          echo "tags=${IMAGE_NAME}:${DEV_TAG}" >> $GITHUB_OUTPUT
-          echo "image=${IMAGE_NAME}:${DEV_TAG}" >> $GITHUB_OUTPUT
-          echo "📦 Dev tag: ${DEV_TAG}"
+          echo "dev_version=${DEV_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "📦 Dev version: ${DEV_VERSION}"
+      - name: Apply dev version to package.json
+        working-directory: ${{ inputs.workingDirectory }}
+        run: |
+          node -e "const fs=require('fs');const p='./package.json';const f=require(p);f.version='${{ steps.devver.outputs.dev_version }}';fs.writeFileSync(p, JSON.stringify(f,null,2));"
+          echo "Using version:" $(node -p "require('./package.json').version)
       - name: Install
         working-directory: ${{ inputs.workingDirectory }}
         run: npm ci --prefer-offline --no-audit
