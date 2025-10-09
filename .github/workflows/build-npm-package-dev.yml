@@ -88,7 +88,7 @@ jobs:
 
       # 🔽 Your requested logic, adapted to set npm version
       - name: Generate dev version from latest tag + branch + sha
-        id: Generate dev tags
+        id: tags
         working-directory: ${{ inputs.workingDirectory }}
         shell: bash
         run: |
