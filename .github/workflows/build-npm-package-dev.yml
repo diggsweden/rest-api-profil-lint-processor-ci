@@ -159,5 +159,5 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Publishing $(node -p "require('./package.json').name")@$(node -p "require('./package.json').version") with tag 'dev'"
-          npm publish --tag "dev"
+          npm publish --tag dev
           echo "did_publish=true" >> "$GITHUB_OUTPUT"
