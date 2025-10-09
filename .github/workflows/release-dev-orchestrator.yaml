@@ -1,0 +1,61 @@
+name: Release Dev Orchestrator
+on:
+  workflow_call:
+    inputs:
+      projectType:
+        description: "Project type: maven, npm"
+        required: true
+        type: string
+      containerfile:
+        description: "Path to Dockerfile/Containerfile"
+        required: false
+        default: "Containerfile"
+        type: string
+      registry:
+        description: "Container registry"
+        required: false
+        default: "ghcr.io"
+        type: string
+      workingDirectory:
+        description: "Working directory"
+        required: false
+        default: "."
+        type: string
+      nodeVersion:
+        description: "Node version for npm projects"
+        required: false
+        default: "22"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-dev-container:
+    name: Build Dev Container
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
+    uses: ./.github/workflows/build-container-ghcr-dev.yml
+    with:
+      containerfile: ${{ inputs.containerfile }}
+      registry: ${{ inputs.registry }}
+      projectType: ${{ inputs.projectType }}
+      workingDirectory: ${{ inputs.workingDirectory }}
+
+  build-npm-package-dev:
+    if: ${{ inputs.projectType == 'npm' }}
+    name: Publish npm dev package (@diggsweden)
+    needs: build-dev-container
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
+    uses: ./.github/workflows/build-npm-package-dev.yml
+    with:
+      nodeVersion: ${{ inputs.nodeVersion }}
+      workingDirectory: ${{ inputs.workingDirectory }}
+      registry: "https://npm.pkg.github.com"
+      distTag: "dev"
+      scope: "diggsweden"

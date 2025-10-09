@@ -30,7 +30,7 @@ jobs:
     permissions:
       contents: write         # Read code and create version bump commits
       packages: write         # Push dev images to ghcr.io
-    uses: diggsweden/reusable-ci/.github/workflows/release-dev-orchestrator.yml@v1
+    uses:  ./.github/workflows/release-dev-orchestrator.yml
     with:
       projectType: npm
     secrets: inherit
