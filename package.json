@@ -1,6 +1,6 @@
 {
   "name": "@diggsweden/rest-api-profil-lint-processor-ci",
-  "version": "v1.0.0",
+  "version": "1.0.1",
   "main": "./dist/app.js",
   "bin": {
     "raplp": "dist/cli.js"
@@ -9,7 +9,7 @@
   "engines": {
     "node": "<=22.15.1"
   },
-    "files": [
+  "files": [
     "dist",
     "README.md",
     "GUIDELINES.md",
